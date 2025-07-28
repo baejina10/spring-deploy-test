@@ -11,6 +11,7 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor
 public class OrderItem {
+    // OrderItem의 경우엔 수량, 항목(bookId), 가격, 어디의 주문인지 여부 (ordersId)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,11 +21,11 @@ public class OrderItem {
     private int itemTotalPrice;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id")
+    @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "book_id")
+    @JoinColumn(name = "book_id", nullable = false)
     private Book book;
 
     public OrderItem(Book book, Order order, int quantity) {

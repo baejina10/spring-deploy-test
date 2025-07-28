@@ -22,7 +22,7 @@ public class SingleOrderResponse {
                 orderItem.getBook().getTitle(),
                 orderItem.getBook().getPrice(),
                 orderItem.getQuantity(),
-                order.getTotalPrice()
+                orderItem.getItemTotalPrice()
         );
     }
 }

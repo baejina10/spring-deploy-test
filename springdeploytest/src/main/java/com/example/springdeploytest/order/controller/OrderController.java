@@ -1,11 +1,16 @@
 package com.example.springdeploytest.order.controller;
 
+import com.example.springdeploytest.order.controller.request_form.CreateAllOrderRequestForm;
 import com.example.springdeploytest.order.controller.request_form.OrderRequestForm;
 import com.example.springdeploytest.order.controller.response_form.CartOrderResponseFrom;
+import com.example.springdeploytest.order.controller.response_form.CreateAllOrderResponseForm;
 import com.example.springdeploytest.order.controller.response_form.SingleOrderResponseForm;
 import com.example.springdeploytest.order.service.OrderService;
+import com.example.springdeploytest.order.service.request.CreateAllOrderItemRequest;
+import com.example.springdeploytest.order.service.request.CreateAllOrderRequest;
 import com.example.springdeploytest.order.service.request.OrderRequest;
 import com.example.springdeploytest.order.service.response.CartOrderResponse;
+import com.example.springdeploytest.order.service.response.CreateAllOrderResponse;
 import com.example.springdeploytest.order.service.response.SingleOrderResponse;
 import com.example.springdeploytest.redis_cache.RedisCacheService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +29,7 @@ public class OrderController {
     final private OrderService orderService;
     final private RedisCacheService redisCacheService;
 
-    @PostMapping("/book")
+    @PostMapping("/single-book")
     public SingleOrderResponseForm orderBook (
             @RequestHeader ("Authorization") String userToken,
             @RequestBody OrderRequestForm requestForm){
@@ -37,6 +42,22 @@ public class OrderController {
         String message = "주문이 완료 되었습니다!";
 
         return SingleOrderResponseForm.form(message,response);
+
+    }
+
+    @PostMapping("/all-book")
+    public CreateAllOrderResponseForm createAllOrder(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody CreateAllOrderRequestForm requestForm) {
+        log.info("createAllOrder()");
+        String pureToken = extractToken(authorizationHeader);
+        Long accountId = redisCacheService.getValueByKey(pureToken,Long.class);
+
+        CreateAllOrderRequest orderRequest = requestForm.toCreateAllOderRequest(accountId);
+        CreateAllOrderItemRequest orderItemRequest = requestForm.toCreateAllOderItemRequest();
+        CreateAllOrderResponse response = orderService.createAll(orderRequest, orderItemRequest);
+
+        return CreateAllOrderResponseForm.from(response);
 
     }
 

@@ -10,8 +10,12 @@ import com.example.springdeploytest.order.entity.Order;
 import com.example.springdeploytest.order.entity.OrderItem;
 import com.example.springdeploytest.order.repository.OrderItemRepository;
 import com.example.springdeploytest.order.repository.OrderRepository;
+import com.example.springdeploytest.order.service.request.CreateAllOrderItemRequest;
+import com.example.springdeploytest.order.service.request.CreateAllOrderRequest;
+import com.example.springdeploytest.order.service.request.CreateOrderItemRequest;
 import com.example.springdeploytest.order.service.request.OrderRequest;
 import com.example.springdeploytest.order.service.response.CartOrderResponse;
+import com.example.springdeploytest.order.service.response.CreateAllOrderResponse;
 import com.example.springdeploytest.order.service.response.SingleOrderResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -57,6 +62,31 @@ public class OrderServiceImple implements OrderService{
 
     @Override
     @Transactional
+    public CreateAllOrderResponse createAll(CreateAllOrderRequest orderRequest, CreateAllOrderItemRequest orderItemRequest) {
+        Long accountId = orderRequest.getAccountId();
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(()-> new RuntimeException("존재하지 않는 사용자입니다."));
+
+        Order order = orderRequest.toOrder(account);
+        orderRepository.save(order);
+
+        List<Long> bookIdList = orderItemRequest.getOrderItem().stream()
+                .map(CreateOrderItemRequest::getBookId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<Book> bookList = bookRepository.findAllById(bookIdList);
+        if (bookList.size() != bookIdList.size()) {
+            throw new IllegalArgumentException("존재하지 않는 책이 포함되었습니다.");
+        }
+        List<OrderItem> orderItemList = orderItemRequest.toOrderItemList(bookList, order);
+        List<OrderItem> savedOrderItemList = orderItemRepository.saveAll(orderItemList);
+
+        return CreateAllOrderResponse.from(order,savedOrderItemList);
+    }
+
+    @Override
+    @Transactional
     public List<CartOrderResponse> orderFromCart(Long accountId) {
 
         // 사용자 확인하고 정보 받기
@@ -72,10 +102,10 @@ public class OrderServiceImple implements OrderService{
         // 꺼낸 장바구니 정보를 주문 DB 에 담는다.
 
         // account 정보를 order에 객체 생성하고 db에 저장,
-        List<Order> savedOders = new ArrayList<>();
+        List<Order> savedOrders = new ArrayList<>();
         Order accountSave = new Order(account);
         Order savedOrder = orderRepository.save(accountSave);
-        savedOders.add(savedOrder);
+        savedOrders.add(savedOrder);
 
         // order, book, 수량을 cartList에 꺼내서 orderItem에 객체 생성하며 초기화하고 db에 저장
         List<OrderItem> savedOrderItems = new ArrayList<>();
@@ -84,11 +114,14 @@ public class OrderServiceImple implements OrderService{
             OrderItem savedOrderItem = orderItemRepository.save(orderItem);
             savedOrderItems.add(savedOrderItem);
         }
+        // 총 가격 계산 후 저장
+        savedOrder.calculateTotalPrice(savedOrderItems);
+        orderRepository.save(savedOrder);
 
         // 장바구니를 비우는 작업
         cartRepository.deleteAll(cartList);
 
-        return CartOrderResponse.from(savedOrderItems, savedOders);
+        return CartOrderResponse.from(savedOrderItems, savedOrders);
     }
 
     // 주문 전체 가격 구하는 메서드
