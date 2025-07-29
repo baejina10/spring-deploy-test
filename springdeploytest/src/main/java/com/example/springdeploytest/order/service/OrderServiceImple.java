@@ -98,10 +98,10 @@ public class OrderServiceImple implements OrderService{
         // 1 + 1 = 1 이 나오는 괴현상을 나타나지 않게 해주는 것임.
         // 좀 더 전문 용어로는 Lock을 걸어서 데이터를 안전하게 보호한다 보면 되는데
         // 그냥 다수의 데이터를 처리할 때는 무조건 saveAll을 사용한다 생각하는 것이 속편함.
-        List<OrderItem> orderItemList = orderItemRequest.toOrderItemList(bookList, order);
+        List<OrderItem> orderItemList = orderItemRequest.toOrderItemList(bookList, savedOrder);
         List<OrderItem> savedOrderItemList = orderItemRepository.saveAll(orderItemList);
 
-        return CreateAllOrderResponse.from(order,savedOrderItemList);
+        return CreateAllOrderResponse.from(savedOrder,savedOrderItemList);
     }
 
     @Override

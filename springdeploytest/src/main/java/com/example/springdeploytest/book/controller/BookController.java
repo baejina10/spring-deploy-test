@@ -1,13 +1,16 @@
 package com.example.springdeploytest.book.controller;
 
+import com.example.springdeploytest.book.controller.request_form.ListBookRequestForm;
 import com.example.springdeploytest.book.controller.request_form.RegisterBookRequestForm;
 import com.example.springdeploytest.book.controller.response_form.ListBookResponseForm;
+import com.example.springdeploytest.book.controller.response_form.MyListBookResponseForm;
 import com.example.springdeploytest.book.controller.response_form.RegisterBookResponseForm;
 import com.example.springdeploytest.book.service.BookService;
+import com.example.springdeploytest.book.service.request.ListBookRequest;
 import com.example.springdeploytest.book.service.request.RegisterBookRequest;
 import com.example.springdeploytest.book.service.response.ListBookResponse;
+import com.example.springdeploytest.book.service.response.MyListBookResponse;
 import com.example.springdeploytest.book.service.response.RegisterBookResponse;
-import com.example.springdeploytest.cart.service.response.RegisterCartResponse;
 import com.example.springdeploytest.redis_cache.RedisCacheService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,14 +56,14 @@ public class BookController {
         return RegisterBookResponseForm.form(message, response);
     }
 
-    // 책 전체 조회
-    @GetMapping("/list")
-    public ResponseEntity<ListBookResponseForm> listBook (@RequestHeader("Authorization") String userToken){
+    // 책 전체 조회 - 혼자 한거
+    @GetMapping("/my-list")
+    public ResponseEntity<MyListBookResponseForm> MyListBook (@RequestHeader("Authorization") String userToken){
         String pureToken = extractToken(userToken);
         Long accountId = redisCacheService.getValueByKey(pureToken, Long.class);
 
-        List<ListBookResponse> listAll = bookService.list(accountId);
-        ListBookResponseForm result = ListBookResponseForm.from("전체 책 목록", listAll);
+        List<MyListBookResponse> listAll = bookService.myList(accountId);
+        MyListBookResponseForm result = MyListBookResponseForm.from("전체 책 목록", listAll);
 
         return ResponseEntity.ok(result);
     }
@@ -72,4 +75,17 @@ public class BookController {
         }
         return token;
     }
+
+    // 책 조회 - 강사님과 한거 (페이지 설정 들어가 있음)
+    @GetMapping("/list")
+    public ListBookResponseForm bookList (@ModelAttribute ListBookRequestForm requestForm){
+        log.info("bookList() -> requestForm: {}", requestForm);
+
+        ListBookRequest request = requestForm.toListBookRequest();
+        ListBookResponse response = bookService.list(request);
+
+        return ListBookResponseForm.from(response);
+
+    }
+
 }

@@ -13,6 +13,7 @@ import com.example.springdeploytest.order.service.response.CartOrderResponse;
 import com.example.springdeploytest.order.service.response.CreateAllOrderResponse;
 import com.example.springdeploytest.order.service.response.SingleOrderResponse;
 import com.example.springdeploytest.redis_cache.RedisCacheService;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
