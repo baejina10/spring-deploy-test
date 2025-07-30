@@ -56,7 +56,7 @@ public class BookController {
         return RegisterBookResponseForm.form(message, response);
     }
 
-    // 책 전체 조회 - 혼자 한거
+    // 책 전체 조회 - 혼자 한거 -> 페이지네이션이 안되어있다. 수정할 필요가 있음
     @GetMapping("/my-list")
     public ResponseEntity<MyListBookResponseForm> MyListBook (@RequestHeader("Authorization") String userToken){
         String pureToken = extractToken(userToken);

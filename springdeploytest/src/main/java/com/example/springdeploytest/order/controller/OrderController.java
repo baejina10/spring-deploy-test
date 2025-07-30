@@ -1,16 +1,20 @@
 package com.example.springdeploytest.order.controller;
 
 import com.example.springdeploytest.order.controller.request_form.CreateAllOrderRequestForm;
+import com.example.springdeploytest.order.controller.request_form.ListOrderRequestForm;
 import com.example.springdeploytest.order.controller.request_form.OrderRequestForm;
 import com.example.springdeploytest.order.controller.response_form.CartOrderResponseFrom;
 import com.example.springdeploytest.order.controller.response_form.CreateAllOrderResponseForm;
+import com.example.springdeploytest.order.controller.response_form.ListOrderResponseForm;
 import com.example.springdeploytest.order.controller.response_form.SingleOrderResponseForm;
 import com.example.springdeploytest.order.service.OrderService;
 import com.example.springdeploytest.order.service.request.CreateAllOrderItemRequest;
 import com.example.springdeploytest.order.service.request.CreateAllOrderRequest;
+import com.example.springdeploytest.order.service.request.ListOrderRequest;
 import com.example.springdeploytest.order.service.request.OrderRequest;
 import com.example.springdeploytest.order.service.response.CartOrderResponse;
 import com.example.springdeploytest.order.service.response.CreateAllOrderResponse;
+import com.example.springdeploytest.order.service.response.ListOrderResponse;
 import com.example.springdeploytest.order.service.response.SingleOrderResponse;
 import com.example.springdeploytest.redis_cache.RedisCacheService;
 import lombok.Getter;
@@ -78,6 +82,19 @@ public class OrderController {
             return userToken.substring(7);
         }
         return userToken;
+    }
+
+    @GetMapping("/list")
+    public ListOrderResponseForm orderList(@RequestHeader("Authorization") String authorizationHeader,
+                                           @ModelAttribute ListOrderRequestForm requestForm){
+        log.info("ListOrderRequestForm -> requestForm: {}",requestForm);
+        String pureToken = extractToken(authorizationHeader);
+        Long accountId = redisCacheService.getValueByKey(pureToken,Long.class);
+
+        ListOrderRequest request = requestForm.toListOrderRequest(accountId);
+        ListOrderResponse response = orderService.list(request);
+
+        return ListOrderResponseForm.from(response);
     }
 
 }

@@ -10,15 +10,16 @@ import com.example.springdeploytest.order.entity.Order;
 import com.example.springdeploytest.order.entity.OrderItem;
 import com.example.springdeploytest.order.repository.OrderItemRepository;
 import com.example.springdeploytest.order.repository.OrderRepository;
-import com.example.springdeploytest.order.service.request.CreateAllOrderItemRequest;
-import com.example.springdeploytest.order.service.request.CreateAllOrderRequest;
-import com.example.springdeploytest.order.service.request.CreateOrderItemRequest;
-import com.example.springdeploytest.order.service.request.OrderRequest;
+import com.example.springdeploytest.order.service.request.*;
 import com.example.springdeploytest.order.service.response.CartOrderResponse;
 import com.example.springdeploytest.order.service.response.CreateAllOrderResponse;
+import com.example.springdeploytest.order.service.response.ListOrderResponse;
 import com.example.springdeploytest.order.service.response.SingleOrderResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +30,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class OrderServiceImple implements OrderService{
+public class OrderServiceImpl implements OrderService{
 
     final private OrderRepository orderRepository;
     final private BookRepository bookRepository;
@@ -143,8 +144,24 @@ public class OrderServiceImple implements OrderService{
         return CartOrderResponse.from(savedOrderItems, savedOrders);
     }
 
-    // 주문 전체 가격 구하는 메서드
-//    private int orderTotalPrice (Book book, OrderRequest request){
-//        return book.getPrice() * request.getQuantity();
-//    }
+    @Override
+    public ListOrderResponse list(ListOrderRequest request) {
+        // PageRequest 생성
+        PageRequest pageable = PageRequest.of(request.getPage() - 1, request.getPerPage(),
+                Sort.by("created").descending());
+
+        Long accountId = request.getAccountId();
+        Page<Order> pagedOrder = orderRepository.findAllByAccountId(accountId, pageable);
+        List<Order> pagedOrderList = pagedOrder.getContent();
+
+        List<OrderItem> pageOrderItemList = orderItemRepository.findByOrderIn(pagedOrderList);
+
+        return ListOrderResponse.from(
+                pagedOrderList,
+                pageOrderItemList,
+                pagedOrder.getTotalPages(),
+                pagedOrder.getTotalElements()
+        );
+    }
+
 }
