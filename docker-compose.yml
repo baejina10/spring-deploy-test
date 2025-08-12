@@ -53,6 +53,8 @@ services:
       - |
         /wait-for-it.sh db:3306 -t 15
         java -jar /app.jar
+    env_file:
+      - .env
     networks:
       - app
 
