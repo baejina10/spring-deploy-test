@@ -34,20 +34,25 @@ jobs:
         
       - name: Create application.yaml for CD Deploy
         run: |
+          cd springdeploytest
           echo "${{ secrets.PRODUCTION_ENV }}" > .env
           
       - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+        run: |
+          cd springdeploytest
+          chmod +x gradlew
 
       ## gradle build
       - name: Build with Gradle
         run: |
           ls
+          cd springdeploytest
           ./gradlew clean build -x test
 
       ## docker build & push to production
       - name: Docker build & push to prod
         run: |
+          cd springdeploytest
           docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GHCR_TOKEN }}
           docker buildx create --name arm64builder --use
           docker buildx build --platform linux/amd64,linux/arm64 -f Dockerfile -t ghcr.io/${{ github.actor }}/spring-backend:latest --push .
@@ -58,22 +63,18 @@ jobs:
     name: Deploy
     runs-on: [ self-hosted, deploy-spring-test ]
     steps:
-    - name: Deploy to Production
-      uses: appleboy/ssh-action@v1
-      with:
-        host: ${{ secrets.HOST_IP }}
-        username: ec2-user
-        key: ${{ secrets.PRIVATE_KEY }}
-        port: 22
-        script: |
+      - name: Deploy to Production
+        run: |
+          echo "Starting Backend Production Deployment"
           cd /home/ec2-user/spring-deploy-test
+          
           docker-compose down
-
+  
           echo ${{ secrets.GHCR_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker pull ${{ env.DOCKER_IMAGE }}
-
+  
           docker image prune -f
           docker logout
-
+  
           docker-compose up -d
       
