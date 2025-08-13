@@ -19,26 +19,14 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: '17'
-          distribution: 'zulu' # https://github.com/actions/setup-java
-
-      ## gradle caching
-      # - name: Gradle Caching
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: |
-      #       ~/.gradle/caches
-      #       ~/.gradle/wrapper
-      #     key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-gradle-
+          distribution: 'zulu'
         
       - name: Create application.yaml for CD Deploy
         run: |
           echo "${{ secrets.PRODUCTION_ENV }}" > .env
           
       - name: Grant execute permission for gradlew
-        run: |
-          chmod +x gradlew
+        run: chmod +x gradlew
 
       ## gradle build
       - name: Build with Gradle
@@ -63,7 +51,6 @@ jobs:
         run: |
           echo "Starting Backend Production Deployment"
           cd /home/ec2-user/spring-deploy-test
-          
           docker-compose down
   
           echo ${{ secrets.GHCR_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -73,4 +60,3 @@ jobs:
           docker logout
   
           docker-compose up -d
-      
