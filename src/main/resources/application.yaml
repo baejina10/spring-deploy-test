@@ -39,5 +39,3 @@ kakao:
   redirect-uri: ${KAKAO_REDIRECT_URI}
   token-request-uri: ${KAKAO_TOKEN_REQUEST_URI}
   user-info-request-uri: ${KAKAO_USER_INFO_REQUEST_URI}
-
-debug: true
